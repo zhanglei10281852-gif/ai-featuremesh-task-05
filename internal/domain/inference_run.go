@@ -69,17 +69,6 @@ func validateInferenceRunState(state InferenceRunState) error {
 	}
 }
 
-func (s InferenceRun) RelatedSnapshotState(target InferenceRunState, current SnapshotState) (SnapshotState, bool) {
-	switch target {
-	case InferenceRunRunning:
-		return current, true
-	case InferenceRunCompleted:
-		return SnapshotMaterialized, true
-	default:
-		return current, false
-	}
-}
-
 func (s InferenceRunState) IsTerminal() bool {
 	return s == InferenceRunArchived || s == InferenceRunCancelled
 }

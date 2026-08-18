@@ -250,11 +250,17 @@ func (s *InferenceService) transitionAny(ctx context.Context, runID string, targ
 			return err
 		}
 		for _, batch := range items {
-			if next, ok := run.RelatedSnapshotState(target, batch.State); ok {
-				batch.State = next
-				batch.UpdatedAt = now
-			}
 			switch target {
+			case domain.InferenceRunRunning:
+				if err := batch.Transition(domain.SnapshotMaterializing, now); err != nil {
+					return err
+				}
+			case domain.InferenceRunCompleted:
+				if batch.State != domain.SnapshotQuarantined && batch.State != domain.SnapshotRejected && batch.State != domain.SnapshotApproved {
+					if err := batch.Transition(domain.SnapshotMaterialized, now); err != nil {
+						return err
+					}
+				}
 			case domain.InferenceRunArchived:
 				if batch.State != domain.SnapshotApproved && batch.State != domain.SnapshotRejected && batch.State != domain.SnapshotMaterialized {
 					return domain.ConflictError{Resource: "dataset_snapshot", Reason: "all snapshots must be resolved before archiving"}
